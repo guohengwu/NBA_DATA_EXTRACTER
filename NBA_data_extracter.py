@@ -89,14 +89,6 @@ if st.sidebar.button("Extract Data"):
                 st.write(f"### Shot Chart Data for {player_name} ({season} {game_type})")
                 st.dataframe(shot_data)
 
-                # Add download button for extracted data
-                csv = shot_data.to_csv(index=False)
-                st.download_button(
-                    label="Download Shot Chart Data as CSV",
-                    data=csv,
-                    file_name=f"{player_name}_{season}_shot_chart.csv",
-                    mime='text/csv'
-                )
             else:
                 st.write(f"No shot chart data found for {player_name} in the selected {season} {game_type}.")
         else:
