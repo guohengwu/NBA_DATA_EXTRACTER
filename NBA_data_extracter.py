@@ -29,6 +29,11 @@ if data_type == "Shot Chart Data":
     players_data = players.get_players()
     player_name = st.sidebar.text_input("Enter Player Name (e.g., LeBron James)", "LeBron James")
 
+    # Sidebar inputs for season and game type (Shot Chart Data only)
+    if player_name:
+        season = st.sidebar.selectbox("Select Season", ["2017-18", "2018-19", "2019-20", "2020-21", "2021-22"])
+        game_type = st.sidebar.selectbox("Select Game Type", ["Playoffs", "Regular Season"])
+
 # Button to execute the data extraction
 if st.sidebar.button("Extract Data"):
     if data_type == "Game Data":
@@ -52,13 +57,7 @@ if st.sidebar.button("Extract Data"):
             st.dataframe(games_filtered)
 
             # Add download button
-            csv = games_filtered.to_csv(index=False)
-            st.download_button(
-                label="Download Data as CSV",
-                data=csv,
-                file_name=f"{team_name}_games.csv",
-                mime='text/csv'
-            )
+            
         else:
             st.write("Team not found. Please try again.")
 
@@ -68,32 +67,32 @@ if st.sidebar.button("Extract Data"):
         if player:
             player_id = player['id']
 
-            # Sidebar inputs for season and game type
-            season = st.sidebar.selectbox("Select Season", ["2017-18", "2018-19", "2019-20", "2020-21", "2021-22"])
-            game_type = st.sidebar.selectbox("Select Game Type", ["Playoffs", "Regular Season"])
+            # Ensure season and game type are selected before proceeding
+            if 'season' in locals() and 'game_type' in locals():
+                # Get shotchart details
+                response = shotchartdetail.ShotChartDetail(
+                    team_id=0,  # 0 to ignore team filter
+                    player_id=player_id,
+                    context_measure_simple='FGA',  # Field Goal Attempts
+                    season_nullable=season,
+                    season_type_all_star=game_type
+                )
 
-            # Get shotchart details
-            response = shotchartdetail.ShotChartDetail(
-                team_id=0,  # 0 to ignore team filter
-                player_id=player_id,
-                context_measure_simple='FGA',  # Field Goal Attempts
-                season_nullable=season,
-                season_type_all_star=game_type
-            )
+                # Get data as DataFrame
+                shot_data = response.get_data_frames()[0]
 
-            # Get data as DataFrame
-            shot_data = response.get_data_frames()[0]
+                if not shot_data.empty:
+                    # Display the extracted data
+                    st.write(f"### Shot Chart Data for {player_name} ({season} {game_type})")
+                    st.dataframe(shot_data)
 
-            if not shot_data.empty:
-                # Display the extracted data
-                st.write(f"### Shot Chart Data for {player_name} ({season} {game_type})")
-                st.dataframe(shot_data)
-
+                    
+                else:
+                    st.write(f"No shot chart data found for {player_name} in the selected {season} {game_type}.")
             else:
-                st.write(f"No shot chart data found for {player_name} in the selected {season} {game_type}.")
+                st.write("Please select both a season and game type.")
         else:
             st.write("Player not found. Please check the name.")
 
 # Footer for additional information or instructions
 st.sidebar.write("Note: Use the official NBA API endpoints for real-time data. This app is for educational purposes.")
-
